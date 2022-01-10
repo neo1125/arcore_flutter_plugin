@@ -1,4 +1,3 @@
-
 package com.difrancescogianmarco.arcore_flutter_plugin
 
 import androidx.annotation.ColorInt

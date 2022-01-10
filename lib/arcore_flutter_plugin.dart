@@ -13,3 +13,5 @@ export 'package:arcore_flutter_plugin/src/arcore_plane.dart';
 export 'package:arcore_flutter_plugin/src/arcore_image.dart';
 export 'package:arcore_flutter_plugin/src/arcore_reference_node.dart';
 export 'package:arcore_flutter_plugin/src/arcore_augmented_image.dart';
+export 'package:arcore_flutter_plugin/src/arcore_text3d.dart';
+export 'package:arcore_flutter_plugin/src/arcore_video.dart';

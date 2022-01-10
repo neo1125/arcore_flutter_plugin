@@ -5,8 +5,9 @@ import 'package:arcore_flutter_plugin/src/arcore_rotating_node.dart';
 import 'package:arcore_flutter_plugin/src/utils/vector_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
-import 'arcore_hit_test_result.dart';
+import 'package:vector_math/vector_math_64.dart' as math;
 
+import 'arcore_hit_test_result.dart';
 import 'arcore_node.dart';
 import 'arcore_plane.dart';
 
@@ -32,14 +33,12 @@ class ArCoreController {
     return arcoreInstalled;
   }
 
-  ArCoreController(
-      {int id,
-      this.enableTapRecognizer,
-      this.enablePlaneRenderer,
-      this.enableUpdateListener,
-      this.debug = false
-//    @required this.onUnsupported,
-      }) {
+  ArCoreController({int id,
+    this.enableTapRecognizer,
+    this.enablePlaneRenderer,
+    this.enableUpdateListener,
+    this.debug = false
+  }) {
     _channel = MethodChannel('arcore_flutter_plugin_$id');
     _channel.setMethodCallHandler(_handleMethodCalls);
     init();
@@ -58,6 +57,8 @@ class ArCoreController {
   ArCorePlaneHandler onPlaneDetected;
   String trackingState = '';
   ArCoreAugmentedImageTrackingHandler onTrackingImage;
+
+  Function(String nodeName, String state, double percent) onAnimChanged;
 
   init() async {
     try {
@@ -105,7 +106,7 @@ class ArCoreController {
         }
         break;
       case 'getTrackingState':
-        // TRACKING, PAUSED or STOPPED
+      // TRACKING, PAUSED or STOPPED
         trackingState = call.arguments;
         if (debug) {
           print('Latest tracking state received is: $trackingState');
@@ -116,8 +117,20 @@ class ArCoreController {
           print('flutter onTrackingImage');
         }
         final arCoreAugmentedImage =
-            ArCoreAugmentedImage.fromMap(call.arguments);
+        ArCoreAugmentedImage.fromMap(call.arguments);
         onTrackingImage(arCoreAugmentedImage);
+        break;
+      case 'onAnimChanged':
+        if (debug) {
+          print('onAnimChanged.plugin: $onAnimChanged');
+        }
+        if (onAnimChanged != null) {
+          final String nodeName = call.arguments['nodeName'];
+          final String state = call.arguments['state'];
+          final double percent = call.arguments['percent'];
+
+          onAnimChanged(nodeName, state, percent);
+        }
         break;
       default:
         if (debug) {
@@ -141,6 +154,14 @@ class ArCoreController {
     return _channel.invokeMethod('getTrackingState');
   }
 
+  Future<void> pause() async {
+    return _channel.invokeMethod('pause');
+  }
+
+  Future<void> resume() async {
+    return _channel.invokeMethod('resume');
+  }
+
   addArCoreNodeToAugmentedImage(ArCoreNode node, int index,
       {String parentNodeName}) {
     assert(node != null);
@@ -153,6 +174,7 @@ class ArCoreController {
   Future<void> addArCoreNodeWithAnchor(ArCoreNode node,
       {String parentNodeName}) {
     assert(node != null);
+
     final params = _addParentNodeNameToParams(node.toMap(), parentNodeName);
     if (debug) {
       print(params.toString());
@@ -169,8 +191,8 @@ class ArCoreController {
     return _channel.invokeMethod('removeARCoreNode', {'nodeName': nodeName});
   }
 
-  Map<String, dynamic> _addParentNodeNameToParams(
-      Map geometryMap, String parentNodeName) {
+  Map<String, dynamic> _addParentNodeNameToParams(Map geometryMap,
+      String parentNodeName) {
     if (parentNodeName?.isNotEmpty ?? false)
       geometryMap['parentNodeName'] = parentNodeName;
     return geometryMap;
@@ -200,8 +222,8 @@ class ArCoreController {
         'updateMaterials', _getHandlerParams(node, node.shape.toMap()));
   }
 
-  Map<String, dynamic> _getHandlerParams(
-      ArCoreNode node, Map<String, dynamic> params) {
+  Map<String, dynamic> _getHandlerParams(ArCoreNode node,
+      Map<String, dynamic> params) {
     final Map<String, dynamic> values = <String, dynamic>{'name': node.name}
       ..addAll(params);
     return values;
@@ -229,12 +251,16 @@ class ArCoreController {
     });
   }
 
-  void dispose() {
-    _channel?.invokeMethod<void>('dispose');
+  Future<void> dispose() {
+    return _channel?.invokeMethod<void>('dispose');
   }
 
-  void resume() {
-    _channel?.invokeMethod<void>('resume');
+  Future<void> cleanup() {
+    return _channel?.invokeMethod<void>('cleanup');
+  }
+
+  Future<void> runGC() {
+    return _channel?.invokeMethod<void>('runGC');
   }
 
   Future<void> removeNodeWithIndex(int index) async {
@@ -245,5 +271,13 @@ class ArCoreController {
     } catch (ex) {
       print(ex);
     }
+  }
+
+  Future<void> animate(
+      {String nodeName, List<double> interval, double progress}) async {
+    return _channel?.invokeMethod<void>(
+        'animate', {
+      'nodeName': nodeName, 'interval': interval, 'progress': progress,
+    });
   }
 }

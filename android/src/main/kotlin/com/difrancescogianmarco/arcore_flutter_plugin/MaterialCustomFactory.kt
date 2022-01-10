@@ -1,13 +1,10 @@
 package com.difrancescogianmarco.arcore_flutter_plugin
 
 import android.content.Context
-import android.util.Log
 import androidx.annotation.RequiresApi
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreMaterial
-import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreNode
 import com.google.ar.sceneform.rendering.Color
 import com.google.ar.sceneform.rendering.Material
-import com.google.ar.sceneform.rendering.R
 import com.google.ar.sceneform.rendering.Texture
 import java.util.concurrent.CompletableFuture
 
@@ -22,7 +19,10 @@ class MaterialCustomFactory {
         val MATERIAL_REFLECTANCE = "reflectance"
         val TAG: String = MaterialCustomFactory::class.java.name
 
-        fun makeWithColor(context: Context, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material>? {
+        fun makeWithColor(
+            context: Context,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material>? {
             if (flutterArCoreMaterial.argb != null) {
                 if (flutterArCoreMaterial.argb[0] < 255) {
                     return makeTransparentWithColor(context, flutterArCoreMaterial)
@@ -32,15 +32,25 @@ class MaterialCustomFactory {
             return null
         }
 
-        fun makeWithTexture(context: Context, texture: Texture, isPng: Boolean, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material>? {
+        fun makeWithTexture(
+            context: Context,
+            texture: Texture,
+            isPng: Boolean,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material>? {
             if (isPng) {
                 return makeTransparentWithTexture(context, texture, flutterArCoreMaterial)
             }
             return makeOpaqueWithTexture(context, texture, flutterArCoreMaterial)
         }
 
-        fun makeOpaqueWithColor(context: Context, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material> {
-            val materialFuture = Material.builder().setSource(context, R.raw.sceneform_opaque_colored_material).build()
+        fun makeOpaqueWithColor(
+            context: Context,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material> {
+            val materialFuture =
+                Material.builder().setSource(context, R.raw.sceneform_opaque_colored_material)
+                    .build()
             return materialFuture.thenApply { material ->
                 material.setFloat3(MATERIAL_COLOR, flutterArCoreMaterial.color.toArColor())
                 applyCustomPbrParams2(material, flutterArCoreMaterial)
@@ -48,8 +58,13 @@ class MaterialCustomFactory {
             }
         }
 
-        fun makeTransparentWithColor(context: Context, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material> {
-            val materialFuture = Material.builder().setSource(context, R.raw.sceneform_transparent_colored_material).build()
+        fun makeTransparentWithColor(
+            context: Context,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material> {
+            val materialFuture =
+                Material.builder().setSource(context, R.raw.sceneform_transparent_colored_material)
+                    .build()
             return materialFuture.thenApply { material ->
                 material.setFloat4(MATERIAL_COLOR, flutterArCoreMaterial.color.toArColor())
                 applyCustomPbrParams2(material, flutterArCoreMaterial)
@@ -57,8 +72,14 @@ class MaterialCustomFactory {
             }
         }
 
-        fun makeOpaqueWithTexture(context: Context, texture: Texture, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material> {
-            val materialFuture = Material.builder().setSource(context, R.raw.sceneform_opaque_textured_material).build()
+        fun makeOpaqueWithTexture(
+            context: Context,
+            texture: Texture,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material> {
+            val materialFuture =
+                Material.builder().setSource(context, R.raw.sceneform_opaque_textured_material)
+                    .build()
             return materialFuture.thenApply { material ->
                 material.setTexture(MATERIAL_TEXTURE, texture)
                 applyCustomPbrParams2(material, flutterArCoreMaterial)
@@ -66,8 +87,14 @@ class MaterialCustomFactory {
             }
         }
 
-        fun makeTransparentWithTexture(context: Context, texture: Texture, flutterArCoreMaterial: FlutterArCoreMaterial): CompletableFuture<Material> {
-            val materialFuture = Material.builder().setSource(context, R.raw.sceneform_transparent_textured_material).build()
+        fun makeTransparentWithTexture(
+            context: Context,
+            texture: Texture,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ): CompletableFuture<Material> {
+            val materialFuture =
+                Material.builder().setSource(context, R.raw.sceneform_transparent_textured_material)
+                    .build()
             return materialFuture.thenApply { material ->
                 material.setTexture(MATERIAL_TEXTURE, texture)
                 applyCustomPbrParams2(material, flutterArCoreMaterial)
@@ -101,7 +128,10 @@ class MaterialCustomFactory {
             return Color(android.graphics.Color.argb(rgb[0], rgb[1], rgb[2], rgb[3]))
         }
 
-        private fun applyCustomPbrParams2(material: Material, flutterArCoreMaterial: FlutterArCoreMaterial) {
+        private fun applyCustomPbrParams2(
+            material: Material,
+            flutterArCoreMaterial: FlutterArCoreMaterial
+        ) {
 
             material.setFloat(MATERIAL_METALLIC, flutterArCoreMaterial.metallic / 100F)
             material.setFloat(MATERIAL_ROUGHNESS, flutterArCoreMaterial.roughness / 100F)

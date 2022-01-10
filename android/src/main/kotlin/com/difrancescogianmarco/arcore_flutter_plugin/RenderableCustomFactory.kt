@@ -6,17 +6,21 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout.LayoutParams
+import android.widget.TextView
 import android.widget.Toast
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreNode
-import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.rendering.Material
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.ViewRenderable
+import java.io.File
 import java.util.function.Consumer
 
-import android.widget.RelativeLayout.LayoutParams;
 
 typealias MaterialHandler = (Material?, Throwable?) -> Unit
 typealias RenderableHandler = (Renderable?, Throwable?) -> Unit
@@ -28,70 +32,121 @@ class RenderableCustomFactory {
         val TAG = "RenderableCustomFactory"
 
         @SuppressLint("ShowToast")
-        fun makeRenderable(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: RenderableHandler) {
+        fun makeRenderable(
+            context: Context,
+            flutterArCoreNode: FlutterArCoreNode,
+            handler: RenderableHandler
+        ) {
 
             if (flutterArCoreNode.dartType == "ArCoreReferenceNode") {
 
                 val url = flutterArCoreNode.objectUrl
 
                 val localObject = flutterArCoreNode.object3DFileName
-                if (localObject != null) {
-                    val builder = ModelRenderable.builder()
-                    builder.setSource(context, Uri.parse(localObject))
-                    builder.build().thenAccept { renderable ->
-                        handler(renderable, null)
-                    }.exceptionally { throwable ->
-                        Log.e(TAG, "Unable to load Renderable.", throwable);
-                        handler(null, throwable)
-                        return@exceptionally null
-                    }
-                } else if (url != null) {
-                    val modelRenderableBuilder = ModelRenderable.builder()
-                    val renderableSourceBuilder = RenderableSource.builder()
-                    if(url.endsWith(".glb")){
-                        renderableSourceBuilder
-                            .setSource(context, Uri.parse(url), RenderableSource.SourceType.GLB)
-                            .setScale(0.5f)
-                            .setRecenterMode(RenderableSource.RecenterMode.ROOT)
-                    } else {
-                        renderableSourceBuilder
-                            .setSource(context, Uri.parse(url), RenderableSource.SourceType.GLTF2)
-                            .setScale(0.5f)
-                            .setRecenterMode(RenderableSource.RecenterMode.ROOT)
-                    }
+                val builder = ModelRenderable.builder()
 
-                    modelRenderableBuilder
-                            .setSource(context, renderableSourceBuilder.build())
-                            .setRegistryId(url)
-                            .build()
-                            .thenAccept { renderable ->
-                                handler(renderable, null)
-                            }
-                            .exceptionally { throwable ->
-                                handler(null, throwable)
-                                Log.e(TAG, "renderable error ${throwable.localizedMessage}")
-                                null
-                            }
+                if (localObject != null) {
+                    builder
+                        .setSource(context, Uri.parse(localObject))
+                        .build()
+                        .thenAccept { renderable ->
+                            handler(renderable, null)
+                        }.exceptionally { throwable ->
+                            Log.e(TAG, "Unable to load Renderable.", throwable);
+                            handler(null, throwable)
+                            return@exceptionally null
+                        }
+                } else if (url != null) {
+                    builder
+                        .setSource(context, Uri.fromFile(File(url)))
+                        .setIsFilamentGltf(true)
+                        .setAsyncLoadEnabled(true)
+                        .setRegistryId(url)
+                        .build()
+                        .thenAccept { renderable ->
+                            handler(renderable, null)
+                        }
+                        .exceptionally { throwable ->
+                            handler(null, throwable)
+                            Log.e(TAG, "renderable error ${throwable.localizedMessage}")
+                            Log.e(TAG, "renderable error. url: $url")
+                            null
+                        }
                 }
 
             } else {
 
-                if (flutterArCoreNode.image != null) {
-                    val image = ImageView(context);
-                    image.layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
-                    val bmp = BitmapFactory.decodeByteArray(flutterArCoreNode.image.bytes, 0, flutterArCoreNode.image.bytes.size)
+                if (flutterArCoreNode.video != null) {
+                    throw RuntimeException("Video node must be created outside the render factory!")
 
-                    image.setImageBitmap(Bitmap.createScaledBitmap(bmp, flutterArCoreNode.image.width,
-                            flutterArCoreNode.image.height, false))
+                } else if (flutterArCoreNode.text3d != null) {
+                    val text3d = flutterArCoreNode.text3d
+                    val lay = LinearLayout(context)
+                    lay.orientation = LinearLayout.HORIZONTAL
+                    lay.layoutParams =
+                        ViewGroup.LayoutParams(3000, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    lay.gravity = Gravity.CENTER
+                    val textView = TextView(context)
+                    lay.addView(textView)
+                    textView.text = text3d.text
+                    textView.setTextColor(text3d.color)
+                    textView.textSize = 24f
+                    textView.gravity = when (text3d.align) {
+                        "center" -> Gravity.CENTER
+                        "right" -> Gravity.END
+                        else -> Gravity.START
+                    }
+
+                    if (text3d.shadowOn) {
+                        textView.setShadowLayer(
+                            text3d.shadowRadius,
+                            text3d.shadowDx,
+                            text3d.shadowDy,
+                            text3d.shadowColor
+                        )
+                    }
+
+                    ViewRenderable.builder()
+                        .setView(context, lay)
+                        .setHorizontalAlignment(ViewRenderable.HorizontalAlignment.CENTER)
+                        .setVerticalAlignment(ViewRenderable.VerticalAlignment.CENTER)
+                        .build()
+                        .thenAccept { renderable: ViewRenderable ->
+                            handler(renderable, null)
+                        }
+                        .exceptionally { throwable ->
+                            Log.e(TAG, "Unable to create text renderable.", throwable);
+                            handler(null, throwable)
+                            return@exceptionally null
+                        }
+
+                } else if (flutterArCoreNode.image != null) {
+                    val image = ImageView(context);
+                    image.layoutParams =
+                        LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
+                    val bmp = BitmapFactory.decodeByteArray(
+                        flutterArCoreNode.image.bytes,
+                        0,
+                        flutterArCoreNode.image.bytes.size
+                    )
+
+                    image.setImageBitmap(
+                        Bitmap.createScaledBitmap(
+                            bmp, flutterArCoreNode.image.width,
+                            flutterArCoreNode.image.height, false
+                        )
+                    )
 
                     ViewRenderable.builder().setView(context, image)
-                            .build()
-                            .thenAccept(Consumer { renderable: ViewRenderable -> handler(renderable, null) })
-                            .exceptionally { throwable ->
-                                Log.e(TAG, "Unable to load image renderable.", throwable);
-                                handler(null, throwable)
-                                return@exceptionally null
-                            }
+                        .build()
+                        .thenAccept(Consumer { renderable: ViewRenderable ->
+                            handler(renderable, null)
+                        })
+                        .exceptionally { throwable ->
+                            Log.e(TAG, "Unable to load image renderable.", throwable);
+                            handler(null, throwable)
+                            return@exceptionally null
+                        }
                 } else {
                     makeMaterial(context, flutterArCoreNode) { material, throwable ->
                         if (throwable != null) {
@@ -111,14 +166,15 @@ class RenderableCustomFactory {
                             Toast.makeText(context, ex.toString(), Toast.LENGTH_LONG)
                         }
                     }
-
-
                 }
-
             }
         }
 
-        private fun makeMaterial(context: Context, flutterArCoreNode: FlutterArCoreNode, handler: MaterialHandler) {
+        private fun makeMaterial(
+            context: Context,
+            flutterArCoreNode: FlutterArCoreNode,
+            handler: MaterialHandler
+        ) {
 //            val texture = flutterArCoreNode.shape?.materials?.first()?.texture
             val textureBytes = flutterArCoreNode.shape?.materials?.first()?.textureBytes
             val color = flutterArCoreNode.shape?.materials?.first()?.color
@@ -130,7 +186,12 @@ class RenderableCustomFactory {
 //                builder.setSource(context, Uri.parse(texture))
                 builder.setSource(BitmapFactory.decodeByteArray(textureBytes, 0, textureBytes.size))
                 builder.build().thenAccept { texture ->
-                    MaterialCustomFactory.makeWithTexture(context, texture, isPng, flutterArCoreNode.shape.materials[0])?.thenAccept { material ->
+                    MaterialCustomFactory.makeWithTexture(
+                        context,
+                        texture,
+                        isPng,
+                        flutterArCoreNode.shape.materials[0]
+                    )?.thenAccept { material ->
                         handler(material, null)
                     }?.exceptionally { throwable ->
                         Log.e(TAG, "texture error ${throwable}")
@@ -140,13 +201,13 @@ class RenderableCustomFactory {
                 }
             } else if (color != null) {
                 MaterialCustomFactory.makeWithColor(context, flutterArCoreNode.shape.materials[0])
-                        ?.thenAccept { material: Material ->
-                            handler(material, null)
-                        }?.exceptionally { throwable ->
-                            Log.e(TAG, "material error ${throwable}")
-                            handler(null, throwable)
-                            return@exceptionally null
-                        }
+                    ?.thenAccept { material: Material ->
+                        handler(material, null)
+                    }?.exceptionally { throwable ->
+                        Log.e(TAG, "material error ${throwable}")
+                        handler(null, throwable)
+                        return@exceptionally null
+                    }
             } else {
                 handler(null, null)
             }

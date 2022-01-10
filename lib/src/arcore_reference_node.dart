@@ -10,24 +10,34 @@ class ArCoreReferenceNode extends ArCoreNode {
   /// Url of gltf object for remote rendering
   final String objectUrl;
 
+  final bool animationAutoPlay;
+
+  final double animationProgressPercent;
+
   ArCoreReferenceNode({
     String name,
     this.object3DFileName,
     this.objectUrl,
+    this.animationAutoPlay = true,
+    this.animationProgressPercent,
     List<ArCoreNode> children = const [],
     Vector3 position,
     Vector3 scale,
-    Vector4 rotation,
+    Vector3 rotation,
   }) : super(
-            name: name,
-            children: children,
-            position: position,
-            scale: scale,
-            rotation: rotation);
+      name: name,
+      children: children,
+      position: position,
+      scale: scale,
+      rotation: rotation);
 
   @override
-  Map<String, dynamic> toMap() => <String, dynamic>{
+  Map<String, dynamic> toMap() =>
+      <String, dynamic>{
         'object3DFileName': this.object3DFileName,
         'objectUrl': this.objectUrl,
-      }..addAll(super.toMap());
+        'animationAutoPlay': this.animationAutoPlay,
+        'animationProgressPercent': this.animationProgressPercent,
+      }
+        ..addAll(super.toMap());
 }

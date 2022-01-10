@@ -1,9 +1,7 @@
 package com.difrancescogianmarco.arcore_flutter_plugin.utils
 
-import android.util.Log
 import com.google.ar.sceneform.math.Quaternion
 import com.google.ar.sceneform.math.Vector3
-import java.util.*
 
 class DecodableUtils {
 
@@ -19,12 +17,9 @@ class DecodableUtils {
         }
 
         fun parseQuaternion(vector: HashMap<String, Double>?): Quaternion? {
-            if (vector != null) {
-                val x: Float = (vector["x"] as Double).toFloat()
-                val y: Float = (vector["y"] as Double).toFloat()
-                val z: Float = (vector["z"] as Double).toFloat()
-                val w: Float = (vector["w"] as Double).toFloat()
-                return Quaternion(x, y, z, w)
+            var vec3 = parseVector3(vector);
+            if (vec3 != null) {
+                return Quaternion(vec3)
             }
             return null
         }

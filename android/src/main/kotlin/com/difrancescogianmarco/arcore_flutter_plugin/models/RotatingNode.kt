@@ -26,7 +26,11 @@ import com.google.ar.sceneform.math.QuaternionEvaluator
 import com.google.ar.sceneform.math.Vector3
 
 /** Node demonstrating rotation and transformations.  */
-class RotatingNode(var degreesPerSecond: Float = 90.0f, private val clockwise: Boolean, private val axisTiltDeg: Float) : Node() {
+class RotatingNode(
+    var degreesPerSecond: Float = 90.0f,
+    private val clockwise: Boolean,
+    private val axisTiltDeg: Float
+) : Node() {
     // We'll use Property Animation to make this node rotate.
     @Nullable
     private var orbitAnimation: ObjectAnimator? = null

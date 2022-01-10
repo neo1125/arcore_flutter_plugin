@@ -18,9 +18,9 @@ class FlutterArCorePose(val translation: FloatArray, val rotation: FloatArray) {
         }
         return doubleArray
     }
-    
-    companion object{
-        fun fromPose(pose: Pose): FlutterArCorePose{
+
+    companion object {
+        fun fromPose(pose: Pose): FlutterArCorePose {
             return FlutterArCorePose(pose.translation, pose.rotationQuaternion)
         }
     }
