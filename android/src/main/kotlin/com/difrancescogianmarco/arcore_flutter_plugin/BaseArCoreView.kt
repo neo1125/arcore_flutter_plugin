@@ -8,10 +8,12 @@ import android.util.Log
 import android.view.View
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreNode
 import com.difrancescogianmarco.arcore_flutter_plugin.utils.ArCoreUtils
+import com.difrancescogianmarco.arcore_flutter_plugin.utils.DecodableUtils.Companion.parseVector3
 import com.google.ar.core.Config
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Node
+import com.google.ar.sceneform.math.Quaternion
 import com.gorisse.thomas.sceneform.light.LightEstimationConfig
 import com.gorisse.thomas.sceneform.lightEstimationConfig
 import io.flutter.plugin.common.BinaryMessenger
@@ -135,6 +137,30 @@ open class BaseArCoreView(
             } else if (throwable != null) {
                 result?.error("onAddNode", throwable.localizedMessage, null)
             }
+        }
+    }
+
+    fun moveNodeTo(name: String, position: HashMap<String, *>) {
+        val node = arSceneView?.scene?.findByName(name)
+        if (node != null) {
+            val value = parseVector3(position)
+            node.localPosition = value
+        }
+    }
+
+    fun scaleNodeTo(name: String, scale: HashMap<String, *>) {
+        val node = arSceneView?.scene?.findByName(name)
+        if (node != null) {
+            val value = parseVector3(scale)
+            node.localScale = value
+        }
+    }
+
+    fun rotateNodeTo(name: String, rotation: HashMap<String, *>) {
+        val node = arSceneView?.scene?.findByName(name)
+        if (node != null) {
+            val value = parseVector3(rotation)
+            node.localRotation = Quaternion.eulerAngles(value)
         }
     }
 

@@ -305,6 +305,31 @@ class ArCoreAugmentedImagesView(
                     System.gc()
                     result.success(null)
                 }
+                "positionChanged" -> {
+                    val map = call.arguments as HashMap<String, *>
+                    moveNodeTo(
+                        map["name"] as String,
+                        map["position"] as HashMap<String, *>
+                    )
+                    result.success(null)
+                }
+                "rotationChanged" -> {
+                    val map = call.arguments as HashMap<String, *>
+                    rotateNodeTo(
+                        map["name"] as String,
+                        map["rotation"] as HashMap<String, *>
+                    )
+                    result.success(null)
+                }
+                "scaleChanged" -> {
+                    val map = call.arguments as HashMap<String, *>
+                    scaleNodeTo(
+                        map["name"] as String,
+                        map["scale"] as HashMap<String, *>
+                    )
+                    result.success(null)
+                }
+
 //                "animate" -> {
 //                    debugLog(" animate")
 //                    val map = call.arguments as HashMap<String, Any>

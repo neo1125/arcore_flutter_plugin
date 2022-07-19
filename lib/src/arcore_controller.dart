@@ -5,7 +5,6 @@ import 'package:arcore_flutter_plugin/src/arcore_rotating_node.dart';
 import 'package:arcore_flutter_plugin/src/utils/vector_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:meta/meta.dart';
-import 'package:vector_math/vector_math_64.dart' as math;
 
 import 'arcore_hit_test_result.dart';
 import 'arcore_node.dart';
@@ -21,16 +20,14 @@ typedef ArCoreAugmentedImageTrackingHandler = void Function(
 const UTILS_CHANNEL_NAME = 'arcore_flutter_plugin/utils';
 
 class ArCoreController {
-  static checkArCoreAvailability() async {
-    final bool arcoreAvailable = await MethodChannel(UTILS_CHANNEL_NAME)
+  static Future<bool> checkArCoreAvailability() async {
+    return await MethodChannel(UTILS_CHANNEL_NAME)
         .invokeMethod('checkArCoreApkAvailability');
-    return arcoreAvailable;
   }
 
-  static checkIsArCoreInstalled() async {
-    final bool arcoreInstalled = await MethodChannel(UTILS_CHANNEL_NAME)
+  static Future<bool> checkIsArCoreInstalled() async {
+    return await MethodChannel(UTILS_CHANNEL_NAME)
         .invokeMethod('checkIfARCoreServicesInstalled');
-    return arcoreInstalled;
   }
 
   ArCoreController({int id,
@@ -200,19 +197,33 @@ class ArCoreController {
 
   void _addListeners(ArCoreNode node) {
     node.position.addListener(() => _handlePositionChanged(node));
+    node.rotation.addListener(() => _handleRotationChanged(node));
+    node.scale.addListener(() => _handleScaleChanged(node));
     node?.shape?.materials?.addListener(() => _updateMaterials(node));
-
     if (node is ArCoreRotatingNode) {
-      node.degreesPerSecond.addListener(() => _handleRotationChanged(node));
+      node.degreesPerSecond.addListener(() => _handleAutoRotationChanged(node));
     }
   }
 
   void _handlePositionChanged(ArCoreNode node) {
     _channel.invokeMethod<void>('positionChanged',
-        _getHandlerParams(node, convertVector3ToMap(node.position.value)));
+        _getHandlerParams(
+            node, {'position': convertVector3ToMap(node.position.value)}));
   }
 
-  void _handleRotationChanged(ArCoreRotatingNode node) {
+  void _handleRotationChanged(ArCoreNode node) {
+    _channel.invokeMethod<void>('rotationChanged',
+        _getHandlerParams(
+            node, {'rotation': convertVector3ToMap(node.rotation.value)}));
+  }
+
+  void _handleScaleChanged(ArCoreNode node) {
+    _channel.invokeMethod<void>('scaleChanged',
+        _getHandlerParams(
+            node, {'scale': convertVector3ToMap(node.scale.value)}));
+  }
+
+  void _handleAutoRotationChanged(ArCoreRotatingNode node) {
     _channel.invokeMethod<void>('rotationChanged',
         {'name': node.name, 'degreesPerSecond': node.degreesPerSecond.value});
   }
