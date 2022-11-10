@@ -9,7 +9,7 @@ class ImageObjectScreen extends StatefulWidget {
 }
 
 class _ImageObjectScreenState extends State<ImageObjectScreen> {
-  ArCoreController arCoreController;
+  ArCoreController? arCoreController;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class _ImageObjectScreenState extends State<ImageObjectScreen> {
 
   void _onArCoreViewCreated(ArCoreController controller) {
     arCoreController = controller;
-    arCoreController.onPlaneTap = _handleOnPlaneTap;
+    arCoreController?.onPlaneTap = _handleOnPlaneTap;
   }
 
   Future _addImage(ArCoreHitTestResult hit) async {
@@ -38,10 +38,10 @@ class _ImageObjectScreenState extends State<ImageObjectScreen> {
     final earth = ArCoreNode(
       image: ArCoreImage(bytes: bytes, width: 500, height: 500),
       position: hit.pose.translation + vector.Vector3(0.0, 0.0, 0.0),
-      rotation: hit.pose.rotation + vector.Vector4(0.0, 0.0, 0.0, 0.0),
+      // rotation: hit.pose.rotation + vector.Vector4(0.0, 0.0, 0.0, 0.0),
     );
 
-    arCoreController.addArCoreNodeWithAnchor(earth);
+    arCoreController?.addArCoreNodeWithAnchor(earth);
   }
 
   void _handleOnPlaneTap(List<ArCoreHitTestResult> hits) {
@@ -51,7 +51,7 @@ class _ImageObjectScreenState extends State<ImageObjectScreen> {
 
   @override
   void dispose() {
-    arCoreController.dispose();
+    arCoreController?.dispose();
     super.dispose();
   }
 }

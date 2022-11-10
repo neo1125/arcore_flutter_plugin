@@ -5,13 +5,15 @@ import 'package:flutter/services.dart';
 import 'package:arcore_flutter_plugin/arcore_flutter_plugin.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
-class AugmentedImagesPage extends StatefulWidget {
+class MultipleAugmentedImagesPage extends StatefulWidget {
   @override
-  _AugmentedImagesPageState createState() => _AugmentedImagesPageState();
+  _MultipleAugmentedImagesPageState createState() =>
+      _MultipleAugmentedImagesPageState();
 }
 
-class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
-  ArCoreController arCoreController;
+class _MultipleAugmentedImagesPageState
+    extends State<MultipleAugmentedImagesPage> {
+  ArCoreController? arCoreController;
   Map<String, ArCoreAugmentedImage> augmentedImagesMap = Map();
   Map<String, Uint8List> bytesMap = Map();
 
@@ -20,7 +22,7 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('AugmentedPage'),
+          title: const Text('Multiple augmented images'),
         ),
         body: ArCoreView(
           onArCoreViewCreated: _onArCoreViewCreated,
@@ -32,7 +34,7 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
 
   void _onArCoreViewCreated(ArCoreController controller) async {
     arCoreController = controller;
-    arCoreController.onTrackingImage = _handleOnTrackingImage;
+    arCoreController?.onTrackingImage = _handleOnTrackingImage;
     loadMultipleImage();
   }
 
@@ -45,7 +47,7 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
     bytesMap["prova_texture"] = bytes2.buffer.asUint8List();
     bytesMap["umano_digitale"] = bytes3.buffer.asUint8List();
 
-    arCoreController.loadMultipleAugmentedImage(bytesMap: bytesMap);
+    arCoreController?.loadMultipleAugmentedImage(bytesMap: bytesMap);
   }
 
   _handleOnTrackingImage(ArCoreAugmentedImage augmentedImage) {
@@ -79,7 +81,7 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
     final node = ArCoreNode(
       shape: sphere,
     );
-    arCoreController.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
+    arCoreController?.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
   }
 
   void _addCube(ArCoreAugmentedImage augmentedImage) {
@@ -95,7 +97,7 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
     final node = ArCoreNode(
       shape: cube,
     );
-    arCoreController.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
+    arCoreController?.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
   }
 
   void _addCylindre(ArCoreAugmentedImage augmentedImage) {
@@ -111,12 +113,12 @@ class _AugmentedImagesPageState extends State<AugmentedImagesPage> {
     final node = ArCoreNode(
       shape: cylindre,
     );
-    arCoreController.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
+    arCoreController?.addArCoreNodeToAugmentedImage(node, augmentedImage.index);
   }
 
   @override
   void dispose() {
-    arCoreController.dispose();
+    arCoreController?.dispose();
     super.dispose();
   }
 }

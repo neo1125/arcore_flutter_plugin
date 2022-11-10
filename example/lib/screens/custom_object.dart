@@ -11,7 +11,7 @@ class CustomObject extends StatefulWidget {
 }
 
 class _CustomObjectState extends State<CustomObject> {
-  ArCoreController arCoreController;
+  ArCoreController? arCoreController;
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +30,8 @@ class _CustomObjectState extends State<CustomObject> {
 
   void _onArCoreViewCreated(ArCoreController controller) {
     arCoreController = controller;
-    arCoreController.onNodeTap = (name) => onTapHandler(name);
-    arCoreController.onPlaneTap = _handleOnPlaneTap;
+    arCoreController?.onNodeTap = (name) => onTapHandler(name);
+    arCoreController?.onPlaneTap = _handleOnPlaneTap;
   }
 
   Future _addSphere(ArCoreHitTestResult hit) async {
@@ -45,7 +45,7 @@ class _CustomObjectState extends State<CustomObject> {
     final moon = ArCoreNode(
       shape: moonShape,
       position: vector.Vector3(0.2, 0, 0),
-      rotation: vector.Vector4(0, 0, 0, 0),
+      // rotation: vector.Vector4(0, 0, 0, 0),
     );
 
     final ByteData textureBytes = await rootBundle.load('assets/earth.jpg');
@@ -63,9 +63,10 @@ class _CustomObjectState extends State<CustomObject> {
         shape: earthShape,
         children: [moon],
         position: hit.pose.translation + vector.Vector3(0.0, 1.0, 0.0),
-        rotation: hit.pose.rotation);
+        // rotation: hit.pose.rotation
+    );
 
-    arCoreController.addArCoreNodeWithAnchor(earth);
+    arCoreController?.addArCoreNodeWithAnchor(earth);
   }
 
   void _handleOnPlaneTap(List<ArCoreHitTestResult> hits) {
@@ -84,7 +85,7 @@ class _CustomObjectState extends State<CustomObject> {
 
   @override
   void dispose() {
-    arCoreController.dispose();
+    arCoreController?.dispose();
     super.dispose();
   }
 }

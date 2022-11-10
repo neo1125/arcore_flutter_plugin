@@ -5,25 +5,25 @@ import 'arcore_node.dart';
 class ArCoreReferenceNode extends ArCoreNode {
   /// Filename of sfb object in assets folder (generated with Import Sceneform Asset)
   /// https://developers.google.com/ar/develop/java/sceneform/import-assets
-  final String object3DFileName;
+  final String? object3DFileName;
 
   /// Url of gltf object for remote rendering
-  final String objectUrl;
+  final String? objectUrl;
 
   final bool animationAutoPlay;
 
-  final double animationProgressPercent;
+  final double? animationProgressPercent;
 
   ArCoreReferenceNode({
-    String name,
+    String? name,
     this.object3DFileName,
     this.objectUrl,
     this.animationAutoPlay = true,
     this.animationProgressPercent,
     List<ArCoreNode> children = const [],
-    Vector3 position,
-    Vector3 scale,
-    Vector3 rotation,
+    Vector3? position,
+    Vector3? scale,
+    Vector3? rotation,
   }) : super(
       name: name,
       children: children,

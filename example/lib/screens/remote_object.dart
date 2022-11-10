@@ -7,9 +7,9 @@ class RemoteObject extends StatefulWidget {
 }
 
 class _RemoteObjectState extends State<RemoteObject> {
-  ArCoreController arCoreController;
+  ArCoreController? arCoreController;
 
-  String objectSelected;
+  String? objectSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +28,8 @@ class _RemoteObjectState extends State<RemoteObject> {
 
   void _onArCoreViewCreated(ArCoreController controller) {
     arCoreController = controller;
-    arCoreController.onNodeTap = (name) => onTapHandler(name);
-    arCoreController.onPlaneTap = _handleOnPlaneTap;
+    arCoreController?.onNodeTap = (name) => onTapHandler(name);
+    arCoreController?.onPlaneTap = _handleOnPlaneTap;
   }
 
   void _addToucano(ArCoreHitTestResult plane) {
@@ -38,9 +38,10 @@ class _RemoteObjectState extends State<RemoteObject> {
         objectUrl:
             "https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF/Duck.gltf",
         position: plane.pose.translation,
-        rotation: plane.pose.rotation);
+        // rotation: plane.pose.rotation
+    );
 
-    arCoreController.addArCoreNodeWithAnchor(toucanNode);
+    arCoreController?.addArCoreNodeWithAnchor(toucanNode);
   }
 
   void _handleOnPlaneTap(List<ArCoreHitTestResult> hits) {
@@ -61,7 +62,7 @@ class _RemoteObjectState extends State<RemoteObject> {
                   Icons.delete,
                 ),
                 onPressed: () {
-                  arCoreController.removeNode(nodeName: name);
+                  arCoreController?.removeNode(nodeName: name);
                   Navigator.pop(context);
                 })
           ],
@@ -72,7 +73,7 @@ class _RemoteObjectState extends State<RemoteObject> {
 
   @override
   void dispose() {
-    arCoreController.dispose();
+    arCoreController?.dispose();
     super.dispose();
   }
 }

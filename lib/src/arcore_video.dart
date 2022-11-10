@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 class ArCoreVideo {
   ArCoreVideo({
-    this.url,
-    this.width,
-    this.height,
+    required this.url,
+    required this.width,
+    required this.height,
     this.volume = 0.7,
     this.repeat = -1,
   });
@@ -14,13 +12,11 @@ class ArCoreVideo {
   final int repeat;
   final double volume;
 
-  Map<String, dynamic> toMap() =>
-      <String, dynamic>{
+  Map<String, dynamic> toMap() => <String, dynamic>{
         'url': url,
         'width': width,
         'height': height,
         'volume': volume,
         'repeat': repeat,
-      }
-        ..removeWhere((String k, dynamic v) => v == null);
+      }..removeWhere((String k, dynamic v) => v == null);
 }

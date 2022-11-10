@@ -18,16 +18,6 @@ class ArcoreFlutterPlugin : FlutterPlugin, ActivityAware {
         const val TAG = "ArCoreFlutterPlugin"
 
         private const val CHANNEL_NAME = "arcore_flutter_plugin"
-
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            registrar
-                .platformViewRegistry()
-                .registerViewFactory(
-                    CHANNEL_NAME,
-                    ArCoreViewFactory(registrar.activity(), registrar.messenger())
-                )
-        }
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {

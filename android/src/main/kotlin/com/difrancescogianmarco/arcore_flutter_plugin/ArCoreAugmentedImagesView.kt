@@ -24,6 +24,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 class ArCoreAugmentedImagesView(
     activity: Activity,
@@ -32,16 +33,14 @@ class ArCoreAugmentedImagesView(
     id: Int,
     val useSingleImage: Boolean,
     debug: Boolean
-) : BaseArCoreView(activity, context, messenger, id, debug) {
+) : BaseArCoreView(activity, context, messenger, id, debug)/*, CoroutineScope*/ {
 
     private val TAG: String = ArCoreAugmentedImagesView::class.java.name
     private var sceneUpdateListener: Scene.OnUpdateListener
 
-    // Augmented image and its associated center pose anchor, keyed by index of the augmented image in
-    // the
-    // database.
+    // Augmented image and its associated center pose anchor,
+    // keyed by index of the augmented image in the database.
     private val augmentedImageMap = HashMap<Int, Pair<AugmentedImage, AnchorNode>>()
-    private var augmentedImageDatabase: AugmentedImageDatabase? = null
     private val gestureDetector: GestureDetector
     private val sync = Integer.MAX_VALUE
 
@@ -85,11 +84,7 @@ class ArCoreAugmentedImagesView(
 
                     TrackingState.STOPPED -> {
                         debugLog("STOPPED: ${augmentedImage.name}")
-                        val anchorNode = augmentedImageMap[augmentedImage.index]!!.second
-                        augmentedImageMap.remove(augmentedImage.index)
-                        arSceneView?.scene?.removeChild(anchorNode)
-                        val text = String.format("Removed Image %d", augmentedImage.index)
-                        debugLog(text)
+                        removeAugmentedImage(augmentedImage.index)
                     }
 
                     else -> {
@@ -125,6 +120,20 @@ class ArCoreAugmentedImagesView(
                     return true
                 }
             })
+    }
+
+    private fun removeAllAugmentedImages() {
+        while (augmentedImageMap.isNotEmpty()) {
+            removeAugmentedImage(augmentedImageMap.keys.first())
+        }
+    }
+
+    private fun removeAugmentedImage(index: Int) {
+        val anchorNode = augmentedImageMap[index]!!.second
+        augmentedImageMap.remove(index)
+        arSceneView?.scene?.removeChild(anchorNode)
+        val text = String.format("Removed Image %d", index)
+        debugLog(text)
     }
 
     private fun updateFlutterNodes(deltaSeconds: Float) {
@@ -250,7 +259,6 @@ class ArCoreAugmentedImagesView(
                                     throwable.localizedMessage,
                                     null
                                 )
-
                             }
                         }
                     } else {
@@ -266,8 +274,7 @@ class ArCoreAugmentedImagesView(
                     try {
                         val map = call.arguments as HashMap<String, Any>
                         val index = map["index"] as Int
-                        removeNode(augmentedImageMap[index]!!.second)
-                        augmentedImageMap.remove(index)
+                        removeAugmentedImage(index)
                         result.success(null)
                     } catch (ex: Exception) {
                         result.error("removeARCoreNodeWithIndex", ex.localizedMessage, null)
@@ -378,8 +385,7 @@ class ArCoreAugmentedImagesView(
 
     override fun cleanup() {
         arSceneView?.scene?.removeOnUpdateListener(sceneUpdateListener)
-        augmentedImageDatabase = null
-        augmentedImageMap.clear()
+        removeAllAugmentedImages()
         super.cleanup()
     }
 
@@ -387,8 +393,8 @@ class ArCoreAugmentedImagesView(
         val scene = arSceneView?.scene
         val enableTapRecognizer = call.argument("enableTapRecognizer") ?: false
         if (enableTapRecognizer) {
-            scene?.setOnTouchListener { hitTestResult: HitTestResult, event: MotionEvent? ->
-                if (event?.action == MotionEvent.ACTION_UP) {
+            scene?.setOnTouchListener { hitTestResult: HitTestResult, event: MotionEvent ->
+                if (event.action == MotionEvent.ACTION_UP) {
                     if (hitTestResult.node != null) {
                         debugLog(" onNodeTap " + hitTestResult.node?.name)
                         debugLog(hitTestResult.node?.localPosition.toString())
@@ -432,8 +438,6 @@ class ArCoreAugmentedImagesView(
                     debugLog("setup session in onResume")
                     applyCameraConfig(session)
                     applySessionConfig(session)
-                    arSceneView?.setSession(session)
-//                    arSceneView?.setSession(session)
                 }
             } catch (e: UnavailableException) {
                 ArCoreUtils.handleSessionException(activity, e)
@@ -465,7 +469,6 @@ class ArCoreAugmentedImagesView(
         config.cloudAnchorMode = Config.CloudAnchorMode.DISABLED
         config.lightEstimationMode = Config.LightEstimationMode.AMBIENT_INTENSITY
 
-        augmentedImageDatabase = AugmentedImageDatabase(session)
         session.configure(config)
 
         arSceneView?.planeRenderer?.isVisible = false
@@ -508,38 +511,37 @@ class ArCoreAugmentedImagesView(
 
     fun setupSession(bytesMap: Map<String, ByteArray>?, result: MethodChannel.Result) {
         debugLog("setupSession()")
-        Thread {
+        CompletableFuture.runAsync {
             try {
                 val session = arSceneView?.session
                 if (session == null) {
                     result.error("setupSession", "Session is not ready!", null)
-                    return@Thread
+                    return@runAsync
                 }
-                val config = Config(session)
-                config.focusMode = Config.FocusMode.AUTO
-                config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+                val config = session.config
                 bytesMap?.let {
-                    if (!addMultipleImagesToAugmentedImageDatabase(config, bytesMap)) {
-                        throw Exception("Could not setup augmented image database")
-                    }
+                    addMultipleImagesToAugmentedImageDatabase(config, bytesMap, session)
                 }
                 activity.runOnUiThread {
-                    session.configure(config)
-                    arSceneView?.setSession(session)
+                    arSceneView?.setSessionConfig(config, true)
                     result.success(null)
                 }
             } catch (ex: Exception) {
-                debugLog(ex.localizedMessage)
+                val error = ex.localizedMessage ?: "Can't setup session with images!"
+                debugLog(error)
+                result.error("setupSession", error, null)
             }
-        }.start()
+        }
     }
 
     private fun addMultipleImagesToAugmentedImageDatabase(
         config: Config,
-        bytesMap: Map<String, ByteArray>
-    ): Boolean {
+        bytesMap: Map<String, ByteArray>, session: Session
+    ) {
         debugLog("addImageToAugmentedImageDatabase")
-        val augmentedImageDatabase = AugmentedImageDatabase(arSceneView?.session)
+        val augmentedImageDatabase = arSceneView?.session?.config?.augmentedImageDatabase
+            ?: AugmentedImageDatabase(arSceneView?.session)
+
         for ((key, value) in bytesMap) {
             val augmentedImageBitmap = loadAugmentedImageBitmap(value)
             try {
@@ -547,23 +549,17 @@ class ArCoreAugmentedImagesView(
             } catch (ex: Exception) {
                 debugLog(
                     "Image with the title $key cannot be added to the database. " +
-                            "The exception was thrown: " + ex?.toString()
+                            "The exception was thrown: " + ex.toString()
                 )
             }
         }
+        if (augmentedImageDatabase.numImages == 0) {
+            throw Exception("Could not setup augmented image database")
+        }
         config.augmentedImageDatabase = augmentedImageDatabase
-        return augmentedImageDatabase?.getNumImages() != 0 ?: return false
     }
 
     private fun addImageToAugmentedImageDatabase(config: Config, bytes: ByteArray): Boolean {
-
-        // There are two ways to configure an AugmentedImageDatabase:
-        // 1. Add Bitmap to DB directly
-        // 2. Load a pre-built AugmentedImageDatabase
-        // Option 2) has
-        // * shorter setup time
-        // * doesn't require images to be packaged in apk.
-//        if (useSingleImage && singleImageBytes != null) {
         debugLog("addImageToAugmentedImageDatabase")
         try {
             val augmentedImageBitmap = loadAugmentedImageBitmap(bytes) ?: return false
@@ -592,12 +588,12 @@ class ArCoreAugmentedImagesView(
     }
 
     private fun loadAugmentedImageBitmap(bitmapdata: ByteArray): Bitmap? {
-        debugLog("loadAugmentedImageBitmap")
-        try {
-            return BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.size)
+        debugLog("loadAugmentedImageBitmap, size: ${bitmapdata.size}")
+        return try {
+            BitmapFactory.decodeByteArray(bitmapdata, 0, bitmapdata.size)
         } catch (e: Exception) {
             Log.e(TAG, "IO exception loading augmented image bitmap.", e)
-            return null
+            null
         }
     }
 
