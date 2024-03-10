@@ -9,14 +9,12 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 
 class ArcoreFlutterPlugin : FlutterPlugin, ActivityAware {
 
-    @Nullable
     private var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding? = null
 
     private var methodCallHandler: MethodCallHandlerImpl? = null
 
     companion object {
         const val TAG = "ArCoreFlutterPlugin"
-
         private const val CHANNEL_NAME = "arcore_flutter_plugin"
     }
 

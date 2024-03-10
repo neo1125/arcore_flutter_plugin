@@ -14,7 +14,7 @@ class ArCoreAndroidView extends AndroidView {
       {Key? key,
       required this.viewType,
       this.onPlatformViewCreated,
-      this.arCoreViewType = ArCoreViewType.STANDARDVIEW,
+      this.arCoreViewType = ArCoreViewType.AUGMENTEDIMAGES,
       this.debug = false})
       : super(
           viewType: viewType,

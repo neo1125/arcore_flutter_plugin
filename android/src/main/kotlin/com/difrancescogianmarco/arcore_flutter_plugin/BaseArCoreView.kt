@@ -37,9 +37,10 @@ open class BaseArCoreView(
     protected var installRequested: Boolean = false
     private val TAG: String = BaseArCoreView::class.java.name
     protected var isSupportedDevice = false
-    protected val allFlutterNodes = mutableListOf<FlutterArCoreNode>()
+    protected val allFlutterNodesSet = mutableSetOf<FlutterArCoreNode>()
 
     init {
+        debugLog("base init")
         methodChannel.setMethodCallHandler(this)
         if (ArCoreUtils.checkIsSupportedDeviceOrFinish(activity)) {
             isSupportedDevice = true
@@ -127,7 +128,7 @@ open class BaseArCoreView(
         ) { node, throwable ->
             debugLog("inserted ${node?.name}")
             if (node != null) {
-                allFlutterNodes.add(flutterArCoreNode)
+                allFlutterNodesSet.add(flutterArCoreNode)
                 attachNodeToParent(node, flutterArCoreNode.parentNodeName)
                 for (n in flutterArCoreNode.children) {
                     n.parentNodeName = flutterArCoreNode.name
@@ -189,7 +190,7 @@ open class BaseArCoreView(
         node.renderable = null
 
         var flutterNodeToRemove: FlutterArCoreNode? = null
-        for (flutterNode in allFlutterNodes) {
+        for (flutterNode in allFlutterNodesSet) {
             if (flutterNode.name == node.name) {
                 debugLog("remove flutter node")
                 flutterNode.dispose()
@@ -198,9 +199,9 @@ open class BaseArCoreView(
             }
         }
         if (flutterNodeToRemove != null) {
-            allFlutterNodes.remove(flutterNodeToRemove)
+            allFlutterNodesSet.remove(flutterNodeToRemove)
         }
-        debugLog("node removed ${node.name} > ${allFlutterNodes.size} > $node}")
+        debugLog("node removed ${node.name} > ${allFlutterNodesSet.size} > $node}")
 
         System.gc()
     }
@@ -209,7 +210,7 @@ open class BaseArCoreView(
         debugLog("onPause()")
         if (arSceneView != null) {
             arSceneView?.pause()
-            allFlutterNodes.forEach {
+            allFlutterNodesSet.forEach {
                 it.pause()
             }
         }
@@ -219,10 +220,10 @@ open class BaseArCoreView(
 
     open fun cleanup() {
         arSceneView?.pause()
-        for (node in allFlutterNodes) {
+        for (node in allFlutterNodesSet) {
             node.dispose()
         }
-        allFlutterNodes.clear()
+        allFlutterNodesSet.clear()
 //        ArSceneView.destroyAllResources()
         System.gc()
     }

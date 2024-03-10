@@ -25,7 +25,7 @@ class ArCoreView extends StatefulWidget {
       this.enableTapRecognizer = false,
       this.enablePlaneRenderer = true,
       this.enableUpdateListener = false,
-      this.type = ArCoreViewType.STANDARDVIEW,
+      this.type = ArCoreViewType.AUGMENTEDIMAGES,
       this.debug = false})
       : super(key: key);
 

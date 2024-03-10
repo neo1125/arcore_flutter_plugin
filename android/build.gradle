@@ -55,7 +55,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.6.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation("com.gorisse.thomas.sceneform:sceneform:1.20.1")
+    implementation("com.gorisse.thomas.sceneform:sceneform:1.23.0")
 }
 
 afterEvaluate {

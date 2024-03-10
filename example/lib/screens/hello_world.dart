@@ -10,6 +10,13 @@ class HelloWorld extends StatefulWidget {
 
 class _HelloWorldState extends State<HelloWorld> {
   ArCoreController? arCoreController;
+  bool ready = false;
+
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(seconds: 2))
+        .then((value) => setState(() => ready = true));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,9 +25,13 @@ class _HelloWorldState extends State<HelloWorld> {
         appBar: AppBar(
           title: const Text('Hello World'),
         ),
-        body: ArCoreView(
-          onArCoreViewCreated: _onArCoreViewCreated,
-        ),
+        body: ready
+            ? ArCoreView(
+                onArCoreViewCreated: _onArCoreViewCreated,
+              )
+            : Container(
+                child: Text("hello world"),
+              ),
       ),
     );
   }
