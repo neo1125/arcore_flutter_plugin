@@ -12,6 +12,7 @@ import com.google.ar.core.Pose
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Quaternion
 import com.google.ar.sceneform.math.Vector3
+import com.google.ar.sceneform.rendering.Color
 import com.google.ar.sceneform.ux.VideoNode
 import java.io.File
 
@@ -86,7 +87,19 @@ class FlutterArCoreNode(map: HashMap<String, *>) {
             it.start()
         }
         mediaPlayers.add(player)
-        return VideoNode(context, player, null)
+
+        var chromaKeyColor: Color? = null;
+        if (video.chromaKeyColor != null && video.chromaKeyColor != "") {
+            val r = Integer.parseInt(video.chromaKeyColor.substring(0, 2), 16)
+            val g = Integer.parseInt(video.chromaKeyColor.substring(2, 4), 16)
+            val b = Integer.parseInt(video.chromaKeyColor.substring(4, 6), 16)
+            chromaKeyColor = Color(
+                r / 255f,
+                g / 255f,
+                b / 255f
+            )
+        }
+        return VideoNode(context, player, chromaKeyColor, null)
     }
 
     fun getPosition(): FloatArray {
