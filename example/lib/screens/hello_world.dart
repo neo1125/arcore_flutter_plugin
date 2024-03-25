@@ -39,8 +39,8 @@ class _HelloWorldState extends State<HelloWorld> {
   void _onArCoreViewCreated(ArCoreController controller) {
     arCoreController = controller;
 
-    _addSphere();
-    _addCylindre();
+    // _addSphere();
+    // _addCylindre();
     _addCube();
   }
 
@@ -69,7 +69,7 @@ class _HelloWorldState extends State<HelloWorld> {
     final cylindre = ArCoreCylinder(
       materials: [material],
       radius: 0.5,
-      height: 0.3,
+      height: 0.1,
     );
     final node = ArCoreNode(
       shape: cylindre,
@@ -85,11 +85,11 @@ class _HelloWorldState extends State<HelloWorld> {
     );
     final cube = ArCoreCube(
       materials: [material],
-      size: vector.Vector3(0.5, 0.5, 0.5),
+      size: vector.Vector3(0.1, 0.1, 0.5),
     );
     final node = ArCoreNode(
       shape: cube,
-      position: vector.Vector3(-0.5, 0.5, -3.5),
+      position: vector.Vector3(0, -0.5, -3.5),
     );
     arCoreController?.addArCoreNode(node);
   }
