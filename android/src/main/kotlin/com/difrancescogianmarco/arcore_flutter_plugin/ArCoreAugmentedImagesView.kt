@@ -6,8 +6,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import android.util.Pair
+import android.os.Handler
+import android.os.HandlerThread
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.PixelCopy
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreHitTestResult
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCoreNode
 import com.difrancescogianmarco.arcore_flutter_plugin.flutter_models.FlutterArCorePose
@@ -22,6 +25,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.*
+import java.io.ByteArrayOutputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.*
@@ -361,10 +365,52 @@ class ArCoreAugmentedImagesView(
 
                 "takeSnapshot" -> {
                     debugLog("takeSnapshot")
-                    // todo: https://github.com/engor/arcore_flutter_plugin/pull/1/commits/b19d0812b8902dbb27ff965c76680bd06abd55fc
-                    result.notImplemented()
-                }
+                    try {
+                        val bitmap: Bitmap = Bitmap.createBitmap(arSceneView!!.getWidth(), arSceneView!!.getHeight(),
+                            Bitmap.Config.ARGB_8888)
+                        val handlerThread = HandlerThread("PixelCopier")
+                        handlerThread.start()
+                        PixelCopy.request(arSceneView!!, bitmap, { copyResult ->
+                            if (copyResult === PixelCopy.SUCCESS) {
+                                val mainHandler = Handler(activity.applicationContext.mainLooper)
+                                val runnable = Runnable {
+                                    val stream = ByteArrayOutputStream()
+                                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
+                                    val data = stream.toByteArray()
+                                    result.success(data)
+                                }
+                                mainHandler.post(runnable)
+                            }
+                            handlerThread.quitSafely()
+                        }, Handler(handlerThread.getLooper()))
 
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        result.error("fail take snapshot", e.message, e);
+                    }
+                }
+                "getCameraPose" -> {
+                    debugLog("getCameraPose")
+                    val cameraPose = arSceneView?.arFrame?.camera?.displayOrientedPose
+                    if (cameraPose != null) {
+                        val width = arSceneView?.width?.toFloat() ?: 0.0f
+                        val height = arSceneView?.height?.toFloat() ?: 0.0f
+                        val ray = arSceneView?.scene?.camera?.screenPointToRay(width / 2.0f, height / 2.0f)
+                        val vector = ray?.origin
+                        if (vector != null) {
+                            val map: HashMap<String, Any> = HashMap<String, Any>()
+                            map["x"] = vector.x
+                            map["y"] = vector.y
+                            map["z"] = vector.z
+                            result.success(map)
+                        } else {
+                            result.error("fail camera position", "", null)
+                        }
+
+                    } else {
+                        result.error("not found camera pose", "", null)
+                    }
+                }
 //                "animate" -> {
 //                    debugLog(" animate")
 //                    val map = call.arguments as HashMap<String, Any>

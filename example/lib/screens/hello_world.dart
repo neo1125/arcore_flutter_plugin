@@ -27,7 +27,7 @@ class _HelloWorldState extends State<HelloWorld> {
         ),
         body: ready
             ? ArCoreView(
-                onArCoreViewCreated: _onArCoreViewCreated,
+          onArCoreViewCreated: _onArCoreViewCreated,
               )
             : Container(
                 child: Text("hello world"),
@@ -36,11 +36,11 @@ class _HelloWorldState extends State<HelloWorld> {
     );
   }
 
-  void _onArCoreViewCreated(ArCoreController controller) {
+  void _onArCoreViewCreated(ArCoreController controller) async {
     arCoreController = controller;
 
-    // _addSphere();
-    // _addCylindre();
+    _addSphere();
+    _addCylindre();
     _addCube();
   }
 
